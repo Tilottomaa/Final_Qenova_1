@@ -7,7 +7,6 @@ from .models import Organization, QueueBooking, Token, Feedback
 from .forms import QueueBookingForm, RescheduleBookingForm, FeedbackForm
 import datetime
 
-
 def org_list_view(request):
     query = request.GET.get('q', '')
     organizations = OrganizationProfile.objects.all()
@@ -18,18 +17,17 @@ def org_list_view(request):
         'query': query
     })
 
-
 def org_detail_view(request, org_id):
     org_profile = get_object_or_404(OrganizationProfile, id=org_id)
     organization, _ = Organization.objects.get_or_create(account=org_profile)
     capacity = organization.manageQueueCapacity()
     feedbacks = Feedback.viewFeedbackHistory(organization)
     avg_rating = Feedback.calculateRating(organization)
-
+    
     user_feedback = None
     if request.user.is_authenticated and not request.user.is_organization:
         user_feedback = Feedback.objects.filter(user_id=request.user.id, organization_id=organization.id).first()
-
+    
     return render(request, 'queue_system/org_detail.html', {
         'organization': organization,
         'org_user': org_profile,
@@ -38,7 +36,6 @@ def org_detail_view(request, org_id):
         'avg_rating': avg_rating,
         'user_feedback': user_feedback,
     })
-
 
 @login_required
 def book_queue_view(request, org_id):
@@ -53,13 +50,12 @@ def book_queue_view(request, org_id):
         form = QueueBookingForm(request.POST)
         if form.is_valid():
             booking_date = form.cleaned_data.get('booking_date') or datetime.date.today()
-
+            
             if not QueueBooking.checkAvailability(organization, booking_date):
                 messages.error(request, "Sorry, daily limit reached.")
                 return render(request, 'queue_system/booking_form.html', {'form': form, 'organization': organization})
 
-            if QueueBooking.objects.filter(user=request.user, organization=organization,
-                                           booking_date=booking_date).exists():
+            if QueueBooking.objects.filter(user=request.user, organization=organization, booking_date=booking_date).exists():
                 messages.error(request, "You already have a booking.")
                 return redirect('org_detail', org_id=org_id)
 
@@ -71,7 +67,7 @@ def book_queue_view(request, org_id):
 
             token_count = Token.objects.filter(organization=organization, booking_date=booking_date).count()
             serial = f"T-{token_count + 1:03d}"
-
+            
             token = Token.objects.create(
                 user=request.user,
                 organization=organization,
@@ -92,7 +88,6 @@ def book_queue_view(request, org_id):
         'org_user': org_profile
     })
 
-
 @login_required
 def booking_success_view(request, token_id):
     token = get_object_or_404(Token, id=token_id, user=request.user)
@@ -102,19 +97,18 @@ def booking_success_view(request, token_id):
         'estimated_time': estimated.strftime('%I:%M %p') if estimated else 'N/A',
     })
 
-
 @login_required
 def queue_status_api(request, org_id):
     org_profile = get_object_or_404(OrganizationProfile, id=org_id)
     organization, _ = Organization.objects.get_or_create(account=org_profile)
-
+    
     today = datetime.date.today()
     upcoming_tokens = Token.objects.filter(
         organization=organization,
         booking_date=today,
         status='Waiting'
     ).order_by('id')[:5]
-
+    
     upcoming_list = [t.serial_number for t in upcoming_tokens]
     user_token = Token.objects.filter(
         organization=organization,
@@ -122,7 +116,7 @@ def queue_status_api(request, org_id):
         booking_date=today,
         status='Waiting'
     ).first()
-
+    
     user_position = None
     if user_token:
         user_position = Token.objects.filter(
@@ -144,7 +138,6 @@ def queue_status_api(request, org_id):
     }
     return JsonResponse(data)
 
-
 @login_required
 def cancel_booking_view(request, booking_id):
     booking = get_object_or_404(QueueBooking, id=booking_id, user=request.user)
@@ -153,7 +146,6 @@ def cancel_booking_view(request, booking_id):
         messages.success(request, 'Booking cancelled.')
         return redirect('dashboard')
     return render(request, 'queue_system/cancel_confirm.html', {'booking': booking})
-
 
 @login_required
 def reschedule_booking_view(request, booking_id):
@@ -168,6 +160,7 @@ def reschedule_booking_view(request, booking_id):
     else:
         form = RescheduleBookingForm()
     return render(request, 'queue_system/reschedule_form.html', {'form': form, 'booking': booking})
+
 
 
 @login_required

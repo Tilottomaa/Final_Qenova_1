@@ -2,15 +2,14 @@ from django import forms
 from .models import QueueBooking
 import datetime
 
-
 class QueueBookingForm(forms.ModelForm):
     is_instant = forms.BooleanField(
-        required=False,
-        initial=True,
+        required=False, 
+        initial=True, 
         label="Instant Booking (Join the queue right now)",
         help_text="Uncheck this if you want to book for a future date."
     )
-
+    
     class Meta:
         model = QueueBooking
         fields = ['booking_date']
@@ -51,7 +50,6 @@ class FeedbackForm(forms.ModelForm):
                 (4, '4 Stars'),
                 (5, '5 Stars')
             ]),
-            'comment': forms.Textarea(
-                attrs={'rows': 4, 'placeholder': 'Optional details about your queue experience...'})
+            'comment': forms.Textarea(attrs={'rows': 4, 'placeholder': 'Optional details about your queue experience...'})
         }
 
