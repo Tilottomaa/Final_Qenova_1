@@ -52,8 +52,6 @@ MIDDLEWARE = [
 EXTERNAL_APPS=[
     'accounts',
     'queue_system',
-    'emergency_and_swap',
-    'organization_panel',
 ]
 
 INSTALLED_APPS += EXTERNAL_APPS
